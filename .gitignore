@@ -1,0 +1,21 @@
+# Secrets: never commit
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local data
+*.db
+*.sqlite3
+
+# OS / tools
+.DS_Store
+.vercel
+
+# Course material (not ours to publish)
+instructions.md

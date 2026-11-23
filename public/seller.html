@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Seller Dashboard · DukaanAI</title>
+  <meta name="description" content="Orders, approvals, sales and agent usage for your DukaanAI store.">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="logo">Dukaan<span>AI</span><small>Seller dashboard · Noor Boutique</small></div>
+    <div class="spacer"></div>
+    <span class="live" id="live" hidden>Live</span>
+    <a class="btn small" href="/">Open store</a>
+    <button class="btn small" id="logout" hidden>Log out</button>
+  </header>
+
+  <form class="login" id="login">
+    <h2 style="margin:0">Seller login</h2>
+    <p class="muted" style="margin:0">Enter the dashboard password (ADMIN_TOKEN).</p>
+    <input type="password" id="token" placeholder="Password" autocomplete="current-password">
+    <button class="btn primary" type="submit">Open dashboard</button>
+    <p class="muted" id="loginErr" style="margin:0;color:var(--bad)"></p>
+  </form>
+
+  <main class="dash" id="dash" hidden>
+    <section class="kpis" id="kpis"></section>
+
+    <section class="panel">
+      <h2>Waiting for your approval</h2>
+      <p class="muted" style="margin-top:-6px">Big orders and discount requests above 10% stop here. The agent never applies them on its own.</p>
+      <div id="pending"></div>
+    </section>
+
+    <section class="two">
+      <div class="panel">
+        <h2>Sales (confirmed orders)</h2>
+        <div class="bars" id="bars"></div>
+        <div style="height:20px"></div>
+      </div>
+      <div class="panel">
+        <h2>Low stock</h2>
+        <div id="lowstock"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>All orders</h2>
+      <div id="orders"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Flagged requests</h2>
+      <p class="muted" style="margin-top:-6px">Prompt injection and off-topic messages the guard refused before they reached the model.</p>
+      <div id="flags"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Upload catalog (CSV)</h2>
+      <p class="muted">Columns: sku,name,category,colour,price,stock,tags,fabric,matches,description. Stock like <code>S:2;M:3</code>, tags and matches separated by <code>;</code>. Existing SKUs are updated.</p>
+      <textarea id="csv" rows="5" placeholder="sku,name,category,colour,price,stock,tags,fabric,matches,description&#10;SKU-21,Lilac Lawn Suit,suit,purple,3600,S:2;M:3;L:1,casual;summer;women,lawn,SKU-14,Soft lilac print"></textarea>
+      <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
+        <button class="btn primary" id="upload">Upload</button><span class="muted" id="uploadMsg"></span>
+      </div>
+    </section>
+  </main>
+  <script src="/seller.js"></script>
+</body>
+</html>
