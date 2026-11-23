@@ -5,38 +5,65 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Noor Boutique · DukaanAI</title>
   <meta name="description" content="Shop eastern wear with an AI sales assistant that speaks English and Roman Urdu.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+  <script src="/icons.js"></script>
   <header class="top">
-    <div class="logo">Dukaan<span>AI</span><small id="shopName">Noor Boutique · Islamabad</small></div>
+    <a class="brand" href="/" aria-label="DukaanAI home">
+      <span class="mark"><svg class="i"><use href="#i-sparkles"/></svg></span>
+      <span><span class="brand-name">Dukaan<em>AI</em></span><small id="shopName">Noor Boutique, Islamabad</small></span>
+    </a>
     <div class="spacer"></div>
-    <label class="who">Shopper ID <input id="userId" autocomplete="off" title="Each ID is a separate shopper with its own memory"></label>
-    <button class="btn small" id="newChat" title="Start a new conversation (long-term memory stays)">New chat</button>
-    <a class="btn small" href="/seller.html">Seller dashboard</a>
+    <label class="field" title="Each shopper ID has its own chats, orders and memory">
+      <svg class="i"><use href="#i-user"/></svg>
+      <span class="sr-label">Shopper</span>
+      <input id="userId" autocomplete="off" aria-label="Shopper ID" title="Each ID is a separate shopper with its own memory">
+    </label>
+    <button class="btn" id="newChat" title="Start a new conversation (long-term memory stays)">
+      <svg class="i"><use href="#i-msg-plus"/></svg><span class="label-long">New chat</span>
+    </button>
+    <span class="divider-v"></span>
+    <a class="btn ghost" href="/seller.html"><svg class="i"><use href="#i-dashboard"/></svg>Seller dashboard</a>
   </header>
 
   <main class="layout">
     <section>
       <div class="hero">
         <h1>Eastern wear for every occasion</h1>
-        <p>Shaadi, mehndi, Eid or everyday. Ask our assistant in English or Roman Urdu. Cash on delivery across Pakistan.</p>
+        <p>Shaadi, mehndi, Eid or everyday. Tell Noor the occasion, budget and size, in English or Roman Urdu, and she finds what's in stock.</p>
+        <ul class="perks">
+          <li><svg class="i"><use href="#i-cash"/></svg>Cash on delivery</li>
+          <li><svg class="i"><use href="#i-truck"/></svg><span id="freeDelivery">Free delivery from Rs 10,000</span></li>
+          <li><svg class="i"><use href="#i-languages"/></svg>English and Roman Urdu</li>
+          <li><svg class="i"><use href="#i-shield"/></svg>Nothing is ordered until you say yes</li>
+        </ul>
       </div>
-      <div class="filters" id="filters"></div>
+      <div class="toolbar">
+        <div class="filters" id="filters"></div>
+        <span class="count" id="count"></span>
+      </div>
       <div class="grid" id="grid"><p class="empty">Loading the collection…</p></div>
     </section>
 
     <aside class="chat" aria-label="Shop assistant">
       <div class="chat-head">
-        <div class="avatar">N</div>
-        <div><b>Noor, your shop assistant</b><small>Replies in seconds · English / Roman Urdu</small></div>
+        <div class="avatar"><svg class="i"><use href="#i-sparkles"/></svg></div>
+        <div><b>Noor</b><small>Your shop assistant, online now</small></div>
+        <div class="badges"><span class="pill"><svg class="i"><use href="#i-zap"/></svg>Replies in seconds</span></div>
       </div>
-      <div class="msgs" id="msgs"></div>
+      <div class="msgs" id="msgs" aria-live="polite"></div>
       <div class="suggest" id="suggest"></div>
       <form class="composer" id="form">
-        <input id="input" placeholder="e.g. shaadi ke liye kuch chahiye, 5000 tak, M size" autocomplete="off" maxlength="1500">
-        <button class="btn primary" type="submit">Send</button>
+        <div class="box">
+          <input id="input" placeholder="e.g. shaadi ke liye kuch chahiye, 5000 tak, M size" autocomplete="off" maxlength="1500" aria-label="Message Noor">
+          <button class="btn primary send" type="submit" aria-label="Send"><svg class="i"><use href="#i-send"/></svg></button>
+        </div>
       </form>
+      <div class="composer-hint"><svg class="i"><use href="#i-shield"/></svg>Prices and stock come from the shop's catalog. Big discounts need the seller's approval.</div>
     </aside>
   </main>
   <script src="/store.js"></script>

@@ -18,16 +18,18 @@ async function api(path, opts = {}) {
 
 function items(o) { return o.items.map((i) => `${i.qty} × ${esc(i.name)} (${esc(i.size)})`).join("<br>"); }
 function status(s) { return `<span class="badge ${esc(s)}">${esc(s.replace("_", " "))}</span>`; }
+const empty = (ic, text) => `<p class="empty">${icon(ic)}${text}</p>`;
 
 function orderRows(list, withActions) {
-  if (!list.length) return `<p class="empty">${withActions ? "Nothing waiting. 🎉" : "No orders yet. Place one from the store."}</p>`;
+  if (!list.length) return withActions ? empty("check", "You're all caught up. Nothing is waiting for approval.")
+    : empty("inbox", "No orders yet. Orders placed through Noor in the store appear here.");
   return `<table><thead><tr><th>Order</th><th>Shopper</th><th>Items</th><th>Total</th><th>City</th><th>Status</th>${withActions ? "<th>Why</th><th></th>" : "<th>When (UTC)</th>"}</tr></thead><tbody>${
     list.map((o) => `<tr class="${seen.has(o.id) ? "" : "new-row"}">
       <td><b>${esc(o.id)}</b></td><td>${esc(o.user_id)}</td><td>${items(o)}</td>
       <td class="num">${rs(o.total)}${o.discount_percent ? `<br><span class="muted">${o.discount_percent}% ${esc(o.discount_status.replace("_", " "))}</span>` : ""}</td>
       <td>${esc(o.city)}</td><td>${status(o.status)}</td>
       ${withActions
-        ? `<td class="muted">${esc(o.approval_reason)}</td><td style="white-space:nowrap"><button class="btn small ok" data-act="approve" data-id="${esc(o.id)}">Approve</button> <button class="btn small bad" data-act="reject" data-id="${esc(o.id)}">Reject</button></td>`
+        ? `<td class="muted">${esc(o.approval_reason)}</td><td><div class="actions"><button class="btn small ok" data-act="approve" data-id="${esc(o.id)}">${icon("check")}Approve</button><button class="btn small bad" data-act="reject" data-id="${esc(o.id)}">${icon("x")}Reject</button></div></td>`
         : `<td class="muted">${esc(o.created_at.slice(5, 16))}</td>`}
     </tr>`).join("")}</tbody></table>`;
 }
@@ -35,38 +37,50 @@ function orderRows(list, withActions) {
 async function refresh() {
   try {
     const [s, orders, flags] = await Promise.all([api("/api/admin/summary"), api("/api/admin/orders"), api("/api/admin/flags")]);
-    const kpi = (label, value) => `<div class="kpi"><div class="label">${label}</div><div class="value">${value}</div></div>`;
+    const waiting = s.by_status.awaiting_seller || 0;
+    const kpi = (cls, ic, label, value, hint) => `<div class="kpi ${cls}"><div class="label"><span class="ic">${icon(ic)}</span>${label}</div>`
+      + `<div class="value">${value}</div><div class="hint">${hint}</div></div>`;
     $("kpis").innerHTML = [
-      kpi("Revenue", rs(s.revenue)), kpi("Orders", s.orders), kpi("Awaiting you", s.by_status.awaiting_seller || 0),
-      kpi("Chats handled", s.chats), kpi("Tokens in / out", `${(s.tokens_in / 1000).toFixed(1)}k / ${(s.tokens_out / 1000).toFixed(1)}k`),
-      kpi("Model cost", `$${s.est_cost_usd.toFixed(3)}`), kpi("Avg reply", `${(s.avg_latency_ms / 1000).toFixed(1)}s`),
-      kpi("Flagged", s.flags),
+      kpi("hero-kpi", "wallet", "Revenue", rs(s.revenue), "From confirmed orders"),
+      kpi("", "bag", "Orders", s.orders, `${s.by_status.confirmed || 0} confirmed, ${s.by_status.rejected || 0} rejected`),
+      kpi(`attention ${waiting ? "has" : ""}`, "clock", "Waiting for you", waiting, waiting ? "Review them below" : "Nothing to review"),
     ].join("");
-    $("pending").innerHTML = orderRows(orders.filter((o) => o.status === "awaiting_seller"), true);
+    const m = (ic, label, value) => `<div class="m">${icon(ic)}<div><small>${label}</small><b>${value}</b></div></div>`;
+    $("agent").innerHTML = [
+      m("chat", "Chats handled", s.chats.toLocaleString()),
+      m("cpu", "Tokens in / out", `${(s.tokens_in / 1000).toFixed(1)}k / ${(s.tokens_out / 1000).toFixed(1)}k`),
+      m("cash", "Model cost", `$${s.est_cost_usd.toFixed(3)}`),
+      m("zap", "Average reply", `${(s.avg_latency_ms / 1000).toFixed(1)}s`),
+      m("shield", "Requests blocked", s.flags),
+    ].join("");
+    const pending = orders.filter((o) => o.status === "awaiting_seller");
+    $("pendingN").textContent = pending.length; $("ordersN").textContent = orders.length; $("flagsN").textContent = flags.length;
+    $("pending").innerHTML = orderRows(pending, true);
     $("orders").innerHTML = orderRows(orders, false);
     orders.forEach((o) => seen.add(o.id));
 
     const max = Math.max(1, ...s.daily_sales.map((d) => d.total));
     $("bars").innerHTML = s.daily_sales.length
-      ? s.daily_sales.map((d) => `<div class="bar" style="height:${Math.max(2, (d.total / max) * 100)}%" title="${esc(d.day)}: ${rs(d.total)}"><span>${esc(d.day.slice(5))}</span></div>`).join("")
-      : `<p class="empty">No confirmed sales yet.</p>`;
+      ? s.daily_sales.map((d) => `<div class="bar" style="height:${Math.max(2, (d.total / max) * 100)}%" title="${esc(d.day)}: ${rs(d.total)}"><em>${(d.total / 1000).toFixed(1)}k</em><span>${esc(d.day.slice(5))}</span></div>`).join("")
+      : empty("chart", "No confirmed sales yet.");
     $("lowstock").innerHTML = s.low_stock.length
       ? `<table><tbody>${s.low_stock.map((p) => `<tr><td><b>${esc(p.sku)}</b> ${esc(p.name)}</td><td class="muted">${esc(Object.entries(p.stock).map(([k, v]) => `${k}:${v}`).join(" "))}</td></tr>`).join("")}</tbody></table>`
-      : `<p class="empty">All items well stocked.</p>`;
+      : empty("check", "Everything is well stocked.");
     $("flags").innerHTML = flags.length
       ? `<table><thead><tr><th>When (UTC)</th><th>Shopper</th><th>Type</th><th>Message</th></tr></thead><tbody>${
           flags.map((f) => `<tr><td class="muted">${esc(f.created_at.slice(5, 16))}</td><td>${esc(f.user_id)}</td><td>${status(f.kind)}</td><td>${esc(f.message)}</td></tr>`).join("")}</tbody></table>`
-      : `<p class="empty">No flagged requests.</p>`;
+      : empty("shield", "No flagged requests. The guard hasn't had to block anything.");
   } catch (e) {
-    if (e.message === "auth") return logout("Wrong password.");
+    if (e.message === "auth") return logout("That password didn't work. Check it and try again.");
   }
 }
 
 $("pending").addEventListener("click", async (e) => {
-  const { act, id } = e.target.dataset;
-  if (!act) return;
-  if (act === "reject" && !confirm(`Reject ${id}? Stock will be returned.`)) return;
-  e.target.disabled = true;
+  const b = e.target.closest("[data-act]");
+  if (!b) return;
+  const { act, id } = b.dataset;
+  if (act === "reject" && !confirm(`Reject ${id}? Its stock goes back on sale.`)) return;
+  b.disabled = true;
   try { await api(`/api/admin/orders/${encodeURIComponent(id)}/${act}`, { method: "POST" }); } catch (err) { alert(err.message); }
   refresh();
 });
@@ -75,12 +89,12 @@ $("upload").addEventListener("click", async () => {
   $("uploadMsg").textContent = "Uploading…";
   try {
     const r = await api("/api/admin/products/csv", { method: "POST", body: JSON.stringify({ csv: $("csv").value }) });
-    $("uploadMsg").textContent = `${r.upserted} products saved.`;
+    $("uploadMsg").textContent = `Uploaded ${r.upserted} products.`;
   } catch (err) { $("uploadMsg").textContent = err.message; }
 });
 
 function show(loggedIn) {
-  $("login").hidden = loggedIn; $("dash").hidden = !loggedIn; $("live").hidden = !loggedIn; $("logout").hidden = !loggedIn;
+  $("loginWrap").hidden = loggedIn; $("dash").hidden = !loggedIn; $("live").hidden = !loggedIn; $("logout").hidden = !loggedIn;
 }
 function logout(msg) {
   token = ""; try { sessionStorage.removeItem("dukaan.admin"); } catch {}

@@ -5,63 +5,102 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Seller Dashboard · DukaanAI</title>
   <meta name="description" content="Orders, approvals, sales and agent usage for your DukaanAI store.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+  <script src="/icons.js"></script>
   <header class="top">
-    <div class="logo">Dukaan<span>AI</span><small>Seller dashboard · Noor Boutique</small></div>
+    <a class="brand" href="/seller.html" aria-label="DukaanAI seller dashboard">
+      <span class="mark"><svg class="i"><use href="#i-sparkles"/></svg></span>
+      <span><span class="brand-name">Dukaan<em>AI</em></span><small>Seller dashboard</small></span>
+    </a>
     <div class="spacer"></div>
-    <span class="live" id="live" hidden>Live</span>
-    <a class="btn small" href="/">Open store</a>
-    <button class="btn small" id="logout" hidden>Log out</button>
+    <span class="live" id="live" hidden>Live, updates every 5s</span>
+    <a class="btn ghost" href="/"><svg class="i"><use href="#i-store"/></svg>Open store</a>
+    <button class="btn" id="logout" hidden><svg class="i"><use href="#i-logout"/></svg>Log out</button>
   </header>
 
-  <form class="login" id="login">
-    <h2 style="margin:0">Seller login</h2>
-    <p class="muted" style="margin:0">Enter the dashboard password (ADMIN_TOKEN).</p>
-    <input type="password" id="token" placeholder="Password" autocomplete="current-password">
-    <button class="btn primary" type="submit">Open dashboard</button>
-    <p class="muted" id="loginErr" style="margin:0;color:var(--bad)"></p>
-  </form>
+  <div class="login-wrap" id="loginWrap">
+    <form class="login" id="login">
+      <div class="lock"><svg class="i lg"><use href="#i-lock"/></svg></div>
+      <h2>Seller login</h2>
+      <p class="muted">Enter your dashboard password to see orders, approvals and what Noor has been doing.</p>
+      <input type="password" id="token" placeholder="Dashboard password" autocomplete="current-password" aria-label="Dashboard password">
+      <button class="btn primary" type="submit"><svg class="i"><use href="#i-dashboard"/></svg>Open dashboard</button>
+      <p class="err" id="loginErr"></p>
+    </form>
+  </div>
 
   <main class="dash" id="dash" hidden>
+    <div class="page-head">
+      <div>
+        <h1>Noor Boutique</h1>
+        <p>Orders, approvals and assistant activity for your store.</p>
+      </div>
+    </div>
+
     <section class="kpis" id="kpis"></section>
 
-    <section class="panel">
-      <h2>Waiting for your approval</h2>
-      <p class="muted" style="margin-top:-6px">Big orders and discount requests above 10% stop here. The agent never applies them on its own.</p>
-      <div id="pending"></div>
+    <p class="strip-title"><svg class="i"><use href="#i-sparkles"/></svg>Noor, your AI assistant</p>
+    <section class="agent-strip" id="agent"></section>
+
+    <section class="panel approvals">
+      <div class="panel-head">
+        <span class="ic"><svg class="i"><use href="#i-clock"/></svg></span>
+        <div><h2>Waiting for your approval <span class="n" id="pendingN">0</span></h2>
+        <p>Orders above Rs 15,000 and discount requests above 10% stop here. Noor never applies them on her own.</p></div>
+      </div>
+      <div class="panel-body" id="pending"></div>
     </section>
 
     <section class="two">
-      <div class="panel">
-        <h2>Sales (confirmed orders)</h2>
-        <div class="bars" id="bars"></div>
-        <div style="height:20px"></div>
+      <div class="panel sales">
+        <div class="panel-head">
+          <span class="ic"><svg class="i"><use href="#i-chart"/></svg></span>
+          <div><h2>Sales</h2><p>Confirmed orders per day, last 14 days.</p></div>
+        </div>
+        <div class="panel-body"><div class="bars" id="bars"></div></div>
       </div>
-      <div class="panel">
-        <h2>Low stock</h2>
-        <div id="lowstock"></div>
+      <div class="panel stock">
+        <div class="panel-head">
+          <span class="ic"><svg class="i"><use href="#i-package"/></svg></span>
+          <div><h2>Low stock</h2><p>Items with 2 or fewer pieces left.</p></div>
+        </div>
+        <div class="panel-body" id="lowstock"></div>
       </div>
     </section>
 
     <section class="panel">
-      <h2>All orders</h2>
-      <div id="orders"></div>
+      <div class="panel-head">
+        <span class="ic"><svg class="i"><use href="#i-list"/></svg></span>
+        <div><h2>All orders <span class="n" id="ordersN">0</span></h2><p>Every order Noor has taken, newest first.</p></div>
+      </div>
+      <div class="panel-body" id="orders"></div>
+    </section>
+
+    <section class="panel flagged">
+      <div class="panel-head">
+        <span class="ic"><svg class="i"><use href="#i-shield"/></svg></span>
+        <div><h2>Flagged requests <span class="n" id="flagsN">0</span></h2>
+        <p>Prompt injection and off-topic messages the guard refused before they reached the model.</p></div>
+      </div>
+      <div class="panel-body" id="flags"></div>
     </section>
 
     <section class="panel">
-      <h2>Flagged requests</h2>
-      <p class="muted" style="margin-top:-6px">Prompt injection and off-topic messages the guard refused before they reached the model.</p>
-      <div id="flags"></div>
-    </section>
-
-    <section class="panel">
-      <h2>Upload catalog (CSV)</h2>
-      <p class="muted">Columns: sku,name,category,colour,price,stock,tags,fabric,matches,description. Stock like <code>S:2;M:3</code>, tags and matches separated by <code>;</code>. Existing SKUs are updated.</p>
-      <textarea id="csv" rows="5" placeholder="sku,name,category,colour,price,stock,tags,fabric,matches,description&#10;SKU-21,Lilac Lawn Suit,suit,purple,3600,S:2;M:3;L:1,casual;summer;women,lawn,SKU-14,Soft lilac print"></textarea>
-      <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
-        <button class="btn primary" id="upload">Upload</button><span class="muted" id="uploadMsg"></span>
+      <div class="panel-head">
+        <span class="ic"><svg class="i"><use href="#i-upload"/></svg></span>
+        <div><h2>Upload catalog</h2>
+        <p>CSV columns: sku, name, category, colour, price, stock, tags, fabric, matches, description. Stock looks like <code>S:2;M:3</code>; separate tags and matches with <code>;</code>. Existing SKUs are updated.</p></div>
+      </div>
+      <div class="panel-body" style="padding-top:16px">
+        <textarea id="csv" rows="5" placeholder="sku,name,category,colour,price,stock,tags,fabric,matches,description&#10;SKU-21,Lilac Lawn Suit,suit,purple,3600,S:2;M:3;L:1,casual;summer;women,lawn,SKU-14,Soft lilac print"></textarea>
+        <div class="upload-row">
+          <button class="btn primary" id="upload"><svg class="i"><use href="#i-upload"/></svg>Upload products</button><span class="muted" id="uploadMsg"></span>
+        </div>
       </div>
     </section>
   </main>
