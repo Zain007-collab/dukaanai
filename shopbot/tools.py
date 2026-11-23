@@ -5,7 +5,7 @@ Prices, stock, totals and discounts are computed here, in code. The model only p
 """
 import re
 from dataclasses import dataclass
-from typing import NotRequired
+from typing import Annotated, NotRequired
 from uuid import uuid4
 
 from langchain.agents import AgentState
@@ -26,11 +26,41 @@ class ShopContext:
     thread_id: str = ""
 
 
+def cart_ops(cart: list | None, update: list | None) -> list:
+    """Reducer for the cart. Tools send operations, not whole carts, so two tool calls in the same step
+    (e.g. "add SKU-17 and SKU-03") both apply instead of one overwriting the other.
+    A plain list of items (no "op" keys) replaces the cart: that's how the agent subgraph hands its
+    finished cart back to the parent graph."""
+    update = update or []
+    if all("op" not in u for u in update):
+        return [dict(i) for i in update]
+    cart = [dict(i) for i in (cart or [])]
+    for op in update:
+        kind = op.get("op")
+        if kind == "clear":
+            cart = []
+        elif kind == "add":
+            item = op["item"]
+            for i in cart:
+                if i["sku"] == item["sku"] and i["size"] == item["size"]:
+                    i["qty"] += item["qty"]
+                    break
+            else:
+                cart.append(dict(item))
+        elif kind == "remove":
+            cart = [i for i in cart if not (i["sku"] == op["sku"] and op.get("size") in (None, i["size"]))]
+    return cart
+
+
+def last_value(old, new):
+    return new
+
+
 class ShopState(AgentState):
     """Short-term memory for one conversation: the messages plus the cart."""
-    cart: NotRequired[list]            # [{sku, name, size, qty, price}]
-    discount: NotRequired[dict]        # {percent, source, status: applied | pending_seller}
-    confirm_pending: NotRequired[bool]  # place_order showed a summary and is waiting for "yes"
+    cart: NotRequired[Annotated[list, cart_ops]]               # [{sku, name, size, qty, price}]
+    discount: NotRequired[Annotated[dict, last_value]]         # {percent, source, status}
+    confirm_pending: NotRequired[Annotated[bool, last_value]]  # place_order is waiting for "yes"
 
 
 def memory_ns(ctx: ShopContext) -> tuple:
@@ -122,29 +152,24 @@ def add_to_cart(sku: str, size: str, runtime: ToolRuntime[ShopContext], qty: int
     size = catalog.norm_size(size) or ""
     if len(p["stock"]) == 1:                       # one-size items (dupattas, shawls)
         size = next(iter(p["stock"]))
-    cart = [dict(i) for i in runtime.state.get("cart", [])]
-    have = sum(i["qty"] for i in cart if i["sku"] == p["sku"] and i["size"] == size)
-    if p["stock"].get(size, 0) < have + max(qty, 1):
+    qty = max(qty, 1)
+    have = sum(i["qty"] for i in runtime.state.get("cart", []) if i["sku"] == p["sku"] and i["size"] == size)
+    if p["stock"].get(size, 0) < have + qty:
         return _reply(runtime, f"Not enough stock: {p['sku']} size {size} has {p['stock'].get(size, 0)} left. "
                                f"Use check_stock for other sizes or alternatives.")
-    for i in cart:
-        if i["sku"] == p["sku"] and i["size"] == size:
-            i["qty"] += max(qty, 1)
-            break
-    else:
-        cart.append({"sku": p["sku"], "name": p["name"], "size": size, "qty": max(qty, 1), "price": p["price"]})
+    op = {"op": "add", "item": {"sku": p["sku"], "name": p["name"], "size": size, "qty": qty, "price": p["price"]}}
+    cart = cart_ops(runtime.state.get("cart"), [op])
     return _reply(runtime, "Added.\n" + _cart_text(cart, runtime.state.get("discount")),
-                  cart=cart, confirm_pending=False)
+                  cart=[op], confirm_pending=False)
 
 
 @tool
 def remove_from_cart(sku: str, runtime: ToolRuntime[ShopContext], size: str | None = None) -> Command:
     """Remove a product (optionally only one size) from the cart."""
-    size = catalog.norm_size(size)
-    cart = [i for i in runtime.state.get("cart", [])
-            if not (i["sku"] == sku.strip().upper() and (size is None or i["size"] == size))]
+    op = {"op": "remove", "sku": sku.strip().upper(), "size": catalog.norm_size(size)}
+    cart = cart_ops(runtime.state.get("cart"), [op])
     return _reply(runtime, "Updated.\n" + _cart_text(cart, runtime.state.get("discount")),
-                  cart=cart, confirm_pending=False)
+                  cart=[op], confirm_pending=False)
 
 
 @tool
@@ -244,7 +269,7 @@ def place_order(city: str, runtime: ToolRuntime[ShopContext], customer_name: str
     text = f"Order {order_id} placed. Total {catalog.fmt_price(total)}, cash on delivery to {city.title()}."
     text += (f" Status: waiting for the seller's approval ({'; '.join(reasons)})." if reasons
              else " Status: confirmed. The seller will contact the shopper for the address.")
-    return _reply(runtime, text, cart=[], discount={}, confirm_pending=False)
+    return _reply(runtime, text, cart=[{"op": "clear"}], discount={}, confirm_pending=False)
 
 
 @tool

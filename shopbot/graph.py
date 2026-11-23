@@ -18,7 +18,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.runtime import Runtime
 
 from shopbot import db, guard, memory
-from shopbot.config import AUTO_DISCOUNT_CAP, MODEL, ORDER_APPROVAL_LIMIT, SELLERS
+from shopbot.config import AUTO_DISCOUNT_CAP, GEMINI_MODEL, LLM_PROVIDER, MODEL, ORDER_APPROVAL_LIMIT, SELLERS
 from shopbot.tools import TOOLS, ShopContext, ShopState, memory_ns
 
 SYSTEM_PROMPT = """You are DukaanAI, the sales assistant of {shop}, an online clothing boutique in {city} \
@@ -87,6 +87,9 @@ def trim_history(request, handler):
 
 
 def build_model():
+    if LLM_PROVIDER == "gemini":   # local testing only (see config.py)
+        from langchain_google_genai import ChatGoogleGenerativeAI
+        return ChatGoogleGenerativeAI(model=GEMINI_MODEL, max_tokens=1024, timeout=40, max_retries=2)
     # Haiku 5.5 with thinking off and low effort: the cheapest, fastest setting. Fine for a shop assistant,
     # and it keeps history edits (trimming) safe. No temperature: Haiku 5.5 rejects non-default sampling.
     return ChatAnthropic(model=MODEL, max_tokens=1024, thinking={"type": "disabled"}, effort="low",

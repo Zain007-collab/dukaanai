@@ -7,7 +7,10 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
 
-MODEL = "claude-haiku-5-5"
+MODEL = "claude-haiku-5-5"   # the graded model; always used in production
+# Local testing only: LLM_PROVIDER=gemini runs the same agent on Gemini to save the Claude budget
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "claude").strip().lower()
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite").strip()
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "dukaan-admin").strip()
 

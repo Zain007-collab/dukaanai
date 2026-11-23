@@ -130,6 +130,18 @@ def test_order_needs_explicit_yes_and_users_are_isolated(client):
     assert not any("ivory" in str(m.content).lower() for m in state.values["messages"])
 
 
+def test_two_items_added_in_one_step(client):
+    c, script = client
+    both = AIMessage("", tool_calls=[
+        {"name": "add_to_cart", "args": {"sku": "SKU-17", "size": "M"}, "id": "p1"},
+        {"name": "add_to_cart", "args": {"sku": "SKU-03", "size": "L"}, "id": "p2"}])
+    script += [both, say("Both added.")]
+    out = chat(c, "nida", "t1", "Add SKU-17 in M and SKU-03 in L")
+    assert out["reply"] == "Both added."
+    state = main.graph().get_state({"configurable": {"thread_id": "dukaan-demo:nida:t1"}})
+    assert sorted(i["sku"] for i in state.values["cart"]) == ["SKU-03", "SKU-17"]
+
+
 def test_big_discount_goes_to_seller(client):
     c, script = client
     script += [call("add_to_cart", sku="SKU-04", size="S"), say("Added.")]
