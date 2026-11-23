@@ -14,7 +14,7 @@ Legend: 🤖 = Claude builds it · 🧑 = a team member must do it (accounts, ke
 - [x] Gemini key in `.env` as `GOOGLE_API_KEY` (local testing only, `LLM_PROVIDER=gemini`)
 - [x] **Neon** Postgres project (AWS US East 1, pooled string) → `DATABASE_URL` in `.env`
 - [x] Public **GitHub** repo `dukaanai` (commits as Zain007-collab only)
-- [ ] **Vercel** account (sign up with GitHub), hosts both the website and the API
+- [x] **Vercel** project `dukaanai` (Hobby), hosts both the website and the API
 
 ## 1. Backend core (🤖)
 - [x] FastAPI + LangGraph + langchain-anthropic (`shopbot/`)
@@ -49,9 +49,9 @@ Legend: 🤖 = Claude builds it · 🧑 = a team member must do it (accounts, ke
 
 ## 4. Deploy (🧑 + 🤖)
 - [x] `vercel.json` + `api/index.py`: website and API on one Vercel project
-- [ ] 🧑 Import repo on Vercel (preset: Other), add env vars `ANTHROPIC_API_KEY`, `DATABASE_URL`, `ADMIN_TOKEN`, deploy
-- [ ] 🧑 Send the Vercel URL
-- [ ] 🤖 Live check: `/health`, `/chat`, store page, dashboard, memory survives on Neon
+- [x] 🧑 Vercel project (preset: Other), env vars `ANTHROPIC_API_KEY`, `DATABASE_URL`, `ADMIN_TOKEN`, deployed with the Vercel CLI (not Git-connected: a push does **not** redeploy)
+- [x] 🧑 Live URL: https://dukaanai-one.vercel.app
+- [x] 🤖 Live check: `/health`, `/chat`, store page, dashboard, memory survives on Neon
 
 ## 5. Website (🤖)
 - [x] Static site in `public/` (no build step, no Node needed)
@@ -65,21 +65,21 @@ Legend: 🤖 = Claude builds it · 🧑 = a team member must do it (accounts, ke
 - [x] Offline tests: 26 passing (`pytest`, no API cost)
 - [x] Local benchmark on Claude: 14/15 (the one failure was the cart bug, since fixed)
 - [x] Local benchmark on Gemini: 15/15
-- [ ] 🤖 Final benchmark on Claude against the **deployed** API → table into README
+- [x] 🤖 Final benchmark on Claude against the **deployed** API: 15/15 → table into README
 
 ## 7. README & repo (🤖 + 🧑)
 - [x] Architecture diagram (Mermaid)
 - [x] Setup steps
 - [x] Memory design note: short-term vs long-term, where stored, how users are kept separate
 - [x] Safety section (OWASP)
-- [ ] 🤖 Benchmark table (after final run)
-- [ ] 🤖 Live website + API URLs
+- [x] 🤖 Benchmark table (after final run)
+- [x] 🤖 Live website + API URLs
 - [ ] 🧑 Demo GIF (save as `docs/demo.gif`)
 - [x] `.env.example` present, `.env` in `.gitignore`, **no key committed** (checked)
 
 ## 8. Submission (🧑)
-- [ ] Live website URL
-- [ ] Agent API base URL (same as the website URL)
+- [x] Live website URL: https://dukaanai-one.vercel.app
+- [x] Agent API base URL (same as the website URL): https://dukaanai-one.vercel.app
 - [x] Public GitHub repo link: https://github.com/Zain007-collab/dukaanai
 - [ ] 2–3 min demo video (YouTube unlisted / Drive, anyone with link)
 - [ ] Photo of the paper canvas (Drive, anyone with link)
