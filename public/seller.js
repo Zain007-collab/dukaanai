@@ -108,9 +108,74 @@ $("login").addEventListener("submit", async (e) => {
   start();
 });
 
+// ── AdForge (Track 2 bonus): two ad variants per product, tracking links, clicks per variant ──
+const adLink = (id) => `${location.origin}/api/ad/${id}`;
+let lastAds = [];
+
+function adCard(a, lead) {
+  return `<article class="ad-card ${lead ? "lead" : ""}">
+    <div class="ad-top"><span class="ad-v">${esc(a.variant)}</span><b>${esc(a.angle)}</b>
+      ${lead ? `<span class="lead-badge">${icon("trophy")}Leading</span>` : ""}
+      <span class="ad-clicks" data-clicks="${esc(a.id)}">${icon("pointer")}${a.clicks} ${a.clicks === 1 ? "click" : "clicks"}</span></div>
+    <pre class="ad-text">${esc(a.text)}</pre>
+    <div class="ad-foot"><code>${esc(adLink(a.id))}</code>
+      <button class="btn small" data-copy="${esc(a.text + "\n\nOrder here: " + adLink(a.id))}">${icon("copy")}Copy ad</button>
+      <button class="btn small ghost" data-copy="${esc(adLink(a.id))}">${icon("link")}Copy link</button></div>
+  </article>`;
+}
+
+function renderLatest() {
+  if (!lastAds.length) { $("adResult").innerHTML = ""; return; }
+  const top = Math.max(...lastAds.map((a) => a.clicks));
+  $("adResult").innerHTML = lastAds.map((a) => adCard(a, top > 0 && a.clicks === top)).join("");
+}
+
+async function loadAdProducts() {
+  try {
+    const list = await fetch(`${API}/api/products`).then((r) => r.json());
+    $("adSku").innerHTML = list.map((p) => `<option value="${esc(p.sku)}">${esc(p.sku)} ${esc(p.name)} (${rs(p.price)})</option>`).join("");
+  } catch { $("adMsg").textContent = "Products didn't load. Refresh the page."; }
+}
+
+async function refreshAds() {
+  try {
+    const rows = await api("/api/admin/ads");
+    const batches = [];
+    rows.forEach((r) => { let b = batches.find((x) => x.batch === r.batch); if (!b) batches.push(b = {batch: r.batch, rows: []}); b.rows.push(r); });
+    if (!lastAds.length && batches.length) lastAds = batches[0].rows;
+    lastAds = lastAds.map((a) => ({...a, clicks: (rows.find((r) => r.id === a.id) || a).clicks}));
+    renderLatest();
+    $("adHistory").innerHTML = batches.length ? `<table><thead><tr><th>Campaign</th><th>Product</th><th>Variant A</th><th>Variant B</th><th>Leader</th><th>Created (UTC)</th></tr></thead><tbody>${
+      batches.slice(0, 8).map((b) => {
+        const [A, B] = ["A", "B"].map((v) => b.rows.find((r) => r.variant === v) || {clicks: 0, angle: ""});
+        const lead = A.clicks === B.clicks ? `<span class="muted">Tied</span>` : `<span class="lead-badge">${icon("trophy")}${A.clicks > B.clicks ? "A" : "B"}</span>`;
+        return `<tr><td><b>${esc(b.batch)}</b></td><td>${esc(b.rows[0].sku)}</td><td>${esc(A.angle)}<br><span class="muted">${A.clicks} clicks</span></td>`
+          + `<td>${esc(B.angle)}<br><span class="muted">${B.clicks} clicks</span></td><td>${lead}</td><td class="muted">${esc(b.rows[0].created_at.slice(5, 16))}</td></tr>`;
+      }).join("")}</tbody></table>` : empty("megaphone", "No campaigns yet. Pick a product and write your first two ads.");
+  } catch (e) { if (e.message === "auth") logout("That password didn't work. Check it and try again."); }
+}
+
+$("adGo").addEventListener("click", async () => {
+  const b = $("adGo"); b.disabled = true;
+  $("adMsg").textContent = "Writing two ads…";
+  try {
+    const out = await api("/api/admin/ads", { method: "POST", body: JSON.stringify({ sku: $("adSku").value, occasion: $("adOcc").value }) });
+    lastAds = out.ads;
+    $("adMsg").innerHTML = `${icon("check")} Two ads ready for ${esc(out.name)}. Audience: ${esc(out.audience)}`;
+    renderLatest(); refreshAds();
+  } catch (err) { $("adMsg").textContent = err.message === "auth" ? "Log in again." : err.message; }
+  b.disabled = false;
+});
+document.addEventListener("click", async (e) => {
+  const c = e.target.closest("[data-copy]");
+  if (!c) return;
+  try { await navigator.clipboard.writeText(c.dataset.copy); const t = c.innerHTML; c.innerHTML = `${icon("check")}Copied`; setTimeout(() => (c.innerHTML = t), 1400); } catch {}
+});
+
 async function start() {
   show(true);
   await refresh();
-  if (token) { clearInterval(timer); timer = setInterval(refresh, 5000); }   // new orders appear live
+  loadAdProducts(); refreshAds();
+  if (token) { clearInterval(timer); timer = setInterval(() => { refresh(); refreshAds(); }, 5000); }   // new orders and clicks appear live
 }
 if (token) start(); else show(false);

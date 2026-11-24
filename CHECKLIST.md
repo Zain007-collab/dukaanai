@@ -62,10 +62,15 @@ Legend: 🤖 = Claude builds it · 🧑 = a team member must do it (accounts, ke
 ## 6. Tests & benchmark (🤖)
 - [x] `tests.json`: 10 cases (input + expected behaviour)
 - [x] `benchmark.py`: 10 cases + 5 attack tests against a live API → pass-rate table
-- [x] Offline tests: 26 passing (`pytest`, no API cost)
+- [x] Offline tests: 32 passing (`pytest`, no API cost)
 - [x] Local benchmark on Claude: 14/15 (the one failure was the cart bug, since fixed)
 - [x] Local benchmark on Gemini: 15/15
 - [x] 🤖 Final benchmark on Claude against the **deployed** API: 15/15 → table into README
+
+## 6b. Bonus (+5): integrates with another track (🤖)
+- [x] AdForge (Track 2) in the seller dashboard: 2 Instagram ad variants per product (brief → writer → checker graph), tracking links, clicks per variant, leader shown
+- [x] Checker removes any price / discount the model writes; real price and sizes come from the catalog
+- [x] Isolated from `/chat` and `/health`; 6 offline tests; live on the deployed site
 
 ## 7. README & repo (🤖 + 🧑)
 - [x] Architecture diagram (Mermaid)

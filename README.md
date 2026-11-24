@@ -137,7 +137,29 @@ Every refused request is logged and shown under **Flagged requests** on the dash
 
 ---
 
-## Benchmark
+## Bonus: AdForge (Track 2) built into ShopBot
+
+A seller doesn't only need to answer shoppers, they need shoppers to arrive. So the seller dashboard
+includes a small piece of **Track 2 · AdForge**: **Promote a product** writes two Instagram ads for an A/B
+test, gives each ad its own tracking link, and counts clicks per variant so the seller can keep the winner.
+A click opens the store on that product with the question ready for Noor, so AdForge feeds ShopBot.
+
+```mermaid
+flowchart LR
+    S((START)) --> B[brief<br/>code: real price, in-stock sizes, fabric from the catalog]
+    B --> W[writer<br/>Claude Haiku 5.5, structured output: 2 variants, different angles]
+    W --> K[checker<br/>code: drops any price, % or deal the model wrote, adds real facts + tracking link]
+    K --> E((END))
+```
+
+| | |
+|---|---|
+| Endpoints | `POST /api/admin/ads` (dashboard password) · `GET /api/admin/ads` · `GET /api/ad/{id}` (tracking link: counts a click, redirects to the store) |
+| Results | Clicks per variant, the leading variant and past campaigns on the dashboard, updating live |
+| Safety | Ads can't promise a price, discount or sale: the checker removes them in code and the price line comes from the database |
+| Isolation | Separate module (`shopbot/adforge.py`) and table; `POST /chat` and `GET /health` don't use it |
+
+
 
 `tests.json` holds our 10 test cases (input + expected behaviour). `benchmark.py` sends them, plus 5
 attack tests, to a live API and checks each reply automatically.
@@ -170,7 +192,7 @@ Final run on 23 Nov 2026 against the deployed API (https://dukaanai-one.vercel.a
 <!-- BENCHMARK:END -->
 
 Offline tests (no API key, no cost) cover the rules, the order flow, memory and isolation with a scripted
-model: `pytest` (26 tests).
+model: `pytest` (32 tests, including the AdForge bonus).
 
 ---
 

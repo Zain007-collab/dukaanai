@@ -238,6 +238,12 @@ def upload_csv(body: CsvIn, seller_id: str = DEFAULT_SELLER, x_admin_token: str 
 app.include_router(router)
 app.include_router(router, prefix="/api", include_in_schema=False)   # /api/chat, /api/health too
 
+try:   # Bonus: AdForge (Track 2) integration. Isolated: if it fails to load, the graded API keeps working.
+    from shopbot.adforge import router as adforge_router
+    app.include_router(adforge_router)
+except Exception:
+    log.exception("AdForge integration disabled")
+
 # Local dev: serve the website from the same server. On Vercel, public/ is served by the CDN.
 _public = ROOT / "public"
 if _public.is_dir():

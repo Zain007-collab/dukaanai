@@ -73,6 +73,27 @@
       </div>
     </section>
 
+    <section class="panel adforge">
+      <div class="panel-head">
+        <span class="ic"><svg class="i"><use href="#i-megaphone"/></svg></span>
+        <div><h2>Promote a product <span class="n">AdForge</span></h2>
+        <p>Track 2 built in: Noor writes two Instagram ads for an A/B test. Each ad gets its own link and every click is counted, so you can keep the winner. Prices and sizes always come from your catalog.</p></div>
+      </div>
+      <div class="panel-body">
+        <div class="ad-form">
+          <label>Product <select id="adSku" aria-label="Product to promote"></select></label>
+          <label>Occasion <select id="adOcc" aria-label="Occasion">
+            <option value="any">Any</option><option value="wedding">Wedding</option><option value="mehndi">Mehndi</option>
+            <option value="eid">Eid</option><option value="winter">Winter</option><option value="everyday">Everyday</option>
+          </select></label>
+          <button class="btn primary" id="adGo"><svg class="i"><use href="#i-sparkles"/></svg>Write 2 ads</button>
+          <span class="muted" id="adMsg"></span>
+        </div>
+        <div class="ad-grid" id="adResult"></div>
+        <div id="adHistory"></div>
+      </div>
+    </section>
+
     <section class="panel">
       <div class="panel-head">
         <span class="ic"><svg class="i"><use href="#i-list"/></svg></span>

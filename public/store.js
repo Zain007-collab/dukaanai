@@ -158,4 +158,11 @@ $("suggest").innerHTML = SUGGESTIONS.map((s) => `<button class="chip" type="butt
 $("suggest").addEventListener("click", (e) => { const b = e.target.closest("[data-say]"); if (b) send(b.dataset.say); });
 
 greet();
-loadProducts();
+loadProducts().then(() => {
+  const ask = new URLSearchParams(location.search).get("ask");
+  if (!ask || !/^SKU-\d+$/i.test(ask)) return;
+  $("input").value = `Tell me about ${ask.toUpperCase()}. Which sizes are available?`;
+  const card = [...document.querySelectorAll(".ask")].find((b) => b.dataset.sku === ask.toUpperCase());
+  if (card) { const c = card.closest(".card"); c.classList.add("spot"); c.scrollIntoView({ block: "center", behavior: "smooth" }); }
+  $("input").focus();
+});
